@@ -18,14 +18,16 @@ dp = Dispatcher(bot)
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     global chat
-    chat = Conversation()
+    chat = Conversation(model='gpt-3.5-turbo')
     await message.reply('Привет я отвечу на все твои вопросы')
 
 
 @dp.message_handler()
 async def answer(message: types.Message):
     chat.add_message('user', message.text)
-    await message.answer('1')
+    response = chat.create_conversation()
+    chat.add_message('assistant', response['choices'][0]['message']['content'])
+    await message.answer(chat.messages[-1]['content'])
 
 
 if __name__ == '__main__':
