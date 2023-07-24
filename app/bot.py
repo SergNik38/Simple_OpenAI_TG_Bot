@@ -1,5 +1,6 @@
 import os
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ChatActions
 from dotenv import load_dotenv
 from app import keyboards as kb
 
@@ -42,6 +43,7 @@ async def new_conversation(message: types.Message):
 async def answer(message: types.Message):
     try:
         chat.add_message('user', message.text)
+        await bot.send_chat_action(message.from_user.id, ChatActions.TYPING)
         response = chat.create_conversation()
         chat.add_message('assistant', response['choices'][0]['message']['content'])
         await message.answer(chat.messages[-1]['content'])
