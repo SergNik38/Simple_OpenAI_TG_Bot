@@ -9,5 +9,4 @@ if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
 if __name__ == '__main__':
-    thread = threading.Thread(target=bot.executor.start_polling(bot.dp, skip_updates=True))
-    thread.start()
+    target=bot.executor.start_polling(bot.dp, skip_updates=True)
