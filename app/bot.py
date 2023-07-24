@@ -35,13 +35,16 @@ async def generate(message: types.Message):
 @dp.message_handler(text='Новая беседа')
 async def new_conversation(message: types.Message):
     chat.new_conversation()
-    await message.answer('Контекст удален')
+    await message.answer('Контекст удален', reply_markup=kb.text_kb)
 
 
 @dp.message_handler()
 async def answer(message: types.Message):
-    chat.add_message('user', message.text)
-    response = chat.create_conversation()
-    chat.add_message('assistant', response['choices'][0]['message']['content'])
-    await message.answer(chat.messages[-1]['content'])
+    try:
+        chat.add_message('user', message.text)
+        response = chat.create_conversation()
+        chat.add_message('assistant', response['choices'][0]['message']['content'])
+        await message.answer(chat.messages[-1]['content'])
+    except Exception:
+        await message.answer('Выберите доступную команду', reply_markup=kb.main)
 
