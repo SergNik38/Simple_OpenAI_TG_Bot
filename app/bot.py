@@ -1,6 +1,8 @@
 import os
+
+import openai
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import ChatActions
+from aiogram.types import ChatActions, ContentType
 from dotenv import load_dotenv
 from app import keyboards as kb
 
@@ -16,9 +18,12 @@ TOKEN = os.getenv('TELEGRAM_TOKEN')
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
+
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    await message.reply('Привет я отвечу на все твои вопросы', reply_markup=kb.main)
+    await message.reply(
+        'Привет! Я бот с технологией ChatGPT \nТы можешь общаться со мной как голосом так и текстом! \nВыбери доступную команду.',
+        reply_markup=kb.main)
 
 
 @dp.message_handler(text='Генерировать текст')
@@ -41,12 +46,24 @@ async def new_conversation(message: types.Message):
 
 @dp.message_handler()
 async def answer(message: types.Message):
+    await bot.send_chat_action(message.from_user.id, ChatActions.TYPING)
     try:
         chat.add_message('user', message.text)
-        await bot.send_chat_action(message.from_user.id, ChatActions.TYPING)
         response = chat.create_conversation()
         chat.add_message('assistant', response['choices'][0]['message']['content'])
         await message.answer(chat.messages[-1]['content'])
     except Exception:
         await message.answer('Выберите доступную команду', reply_markup=kb.main)
 
+
+@dp.message_handler(content_types=ContentType.VOICE)
+async def voice_message_handler(message: types.Message):
+    await bot.send_chat_action(message.from_user.id, ChatActions.TYPING)
+    file_id = message.voice.file_id
+    file = await bot.get_file(file_id)
+    f_name = f'{file_id}.oga'
+    await bot.download_file(file.file_path, f_name)
+    with open(f_name, 'rb') as audio_file:
+        message.text = openai.Audio.transcribe('whisper-1', audio_file)['text']
+    os.remove(f_name)
+    await answer(message)
